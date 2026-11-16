@@ -11,7 +11,8 @@ import { Sounds } from "./sounds.ts";
 // it): https://alistair.cockburn.us/hexagonal-architecture
 
 // Choose another world with a URL like ?seed=7
-const seed = Number(new URLSearchParams(location.search).get("seed")) || 121;
+const params = new URLSearchParams(location.search);
+const seed = Number(params.get("seed")) || 121;
 
 const state = newGame(seed);
 const hud = new Hud(state);
@@ -31,6 +32,19 @@ const manual = new RecipeBook(
   (command) => controller.submit(command),
 );
 controller.onSettled = () => manual.refresh();
+
+// Exercise the presentation with a user gesture while the capstone is pending.
+if (params.get("preview") === "delivery") {
+  const button = document.querySelector<HTMLButtonElement>(
+    "#preview-delivery",
+  )!;
+  button.hidden = false;
+  button.addEventListener("click", () => {
+    button.hidden = true;
+    hud.showDelivery();
+    sounds.playDelivery();
+  }, { once: true });
+}
 
 // For poking at in the browser console, such as comparing logical state with
 // presentation state: game.state

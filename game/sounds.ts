@@ -1,6 +1,6 @@
 import type { GameEvent } from "../core/mod.ts";
 
-type SoundName = "step" | "bump" | "scan" | "chime";
+type SoundName = "step" | "bump" | "scan" | "chime" | "delivery";
 
 // Which sound each event plays. A new event fails to type-check until it has an entry.
 const SOUND_FOR: Record<GameEvent["type"], SoundName | null> = {
@@ -24,6 +24,12 @@ const NOTES: Record<SoundName, Note[]> = {
   chime: [
     { frequency: 660, seconds: 0.18, wave: "sine" },
     { frequency: 990, seconds: 0.25, wave: "sine", at: 0.09 },
+  ],
+  delivery: [
+    { frequency: 294, seconds: 0.48, wave: "triangle" },
+    { frequency: 370, seconds: 0.42, wave: "triangle", at: 0.08 },
+    { frequency: 440, seconds: 0.38, wave: "triangle", at: 0.16 },
+    { frequency: 587, seconds: 0.42, wave: "sine", at: 0.24 },
   ],
 };
 
@@ -54,6 +60,11 @@ export class Sounds {
     if (sound) this.play(sound);
   }
 
+  playDelivery() {
+    // The four notes overlap, so give each voice a softer attack.
+    this.play("delivery", VOLUME * 0.65);
+  }
+
   private setMuted(muted: boolean) {
     this.muted = muted;
     this.button.textContent = muted ? "Sound: off" : "Sound: on";
@@ -73,7 +84,7 @@ export class Sounds {
     }
   }
 
-  private play(sound: SoundName) {
+  private play(sound: SoundName, volume = VOLUME) {
     const { context } = this;
     if (!context || this.muted) return;
     for (const { frequency, seconds, wave, at = 0 } of NOTES[sound]) {
@@ -82,7 +93,7 @@ export class Sounds {
       const gain = context.createGain();
       oscillator.type = wave;
       oscillator.frequency.value = frequency;
-      gain.gain.setValueAtTime(VOLUME, begin);
+      gain.gain.setValueAtTime(volume, begin);
       gain.gain.exponentialRampToValueAtTime(0.001, begin + seconds);
       oscillator.connect(gain).connect(context.destination);
       oscillator.start(begin);
