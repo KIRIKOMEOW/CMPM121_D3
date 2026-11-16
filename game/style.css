@@ -1,83 +1,236 @@
-/* The page around the grid. Everything here is yours to restyle. */
+:root {
+  color-scheme: light;
+  --ink: #302a21;
+  --stamp: #9b3529;
+  --rule: #a29578;
+  --paper: #eee1bf;
+  font: 15px/1.45 "Courier Prime", "Courier New", monospace;
+  color: var(--ink);
+  background: #d3ba8d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
-  background: #14161a;
-  color: #e8e4da;
-  font: 14px system-ui, sans-serif;
+  padding: clamp(12px, 3vw, 46px);
+  background: radial-gradient(ellipse at top, #e1cda6, transparent 70%);
 }
 
 #app {
+  max-width: 1160px;
+  margin-inline: auto;
+  background: linear-gradient(120deg, #f5eacd, var(--paper));
+  border: 1px solid var(--ink);
+  box-shadow: 4px 5px 0 rgb(68 48 22 / 14%);
+}
+
+.waybill-header {
   display: flex;
+  align-items: end;
+  justify-content: space-between;
   flex-wrap: wrap;
-  gap: 16px;
-  padding: 16px;
+  gap: 12px 30px;
+  padding: clamp(18px, 3vw, 34px);
+  border-top: 6px solid var(--stamp);
+  border-bottom: 3px double var(--ink);
 }
 
-#grid canvas {
+.label,
+h2 {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.label {
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+h1 {
+  margin: 5px 0 0;
+  color: var(--stamp);
+  font: 900 clamp(3rem, 7vw, 5.5rem)/0.88 "Archivo Black", "Arial Black",
+    sans-serif;
+  letter-spacing: -0.075em;
+  text-transform: uppercase;
+}
+
+h2 {
+  font-size: 1rem;
+}
+
+.objective {
+  width: min(28ch, 100%);
+  margin: 0;
+  padding-left: 14px;
+  border-left: 3px solid var(--stamp);
+}
+
+.objective::before {
+  content: "";
   display: block;
-  border-radius: 4px;
+  width: 84px;
+  height: 17px;
+  margin-bottom: 7px;
+  background: repeating-linear-gradient(
+    to right,
+    var(--ink) 0 2px,
+    transparent 2px 4px,
+    var(--ink) 4px 5px,
+    transparent 5px 8px,
+    var(--ink) 8px 12px,
+    transparent 12px 14px
+  );
 }
 
-#hud {
-  flex: 1 1 200px;
-  max-width: 320px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-#hud dl {
-  margin: 0;
+.waybill-body {
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 2px 12px;
+  grid-template-columns: minmax(0, 800px) minmax(220px, 1fr);
+  gap: clamp(20px, 3vw, 34px);
+  padding: clamp(14px, 2.5vw, 30px);
 }
 
-#hud dt {
-  color: #8d8a82;
+.section-heading,
+.manifest-columns,
+#inventory li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-#hud dd {
-  margin: 0;
-}
-
-#live {
-  min-height: 1.4em;
-  margin: 0;
-  font-family: monospace;
-  color: #b7b3a8;
+.section-heading,
+#hud h2 {
+  min-height: 2.45rem;
+  border-bottom: 2px solid var(--ink);
 }
 
 #mute {
-  align-self: start;
-  padding: 4px 10px;
+  border: 1px solid var(--ink);
+  padding: 2px 10px;
   color: inherit;
-  background: #262a31;
-  border: 1px solid #3a3f48;
-  border-radius: 4px;
+  background: transparent;
+  font: inherit;
+  font-size: 0.85rem;
   cursor: pointer;
 }
 
-/* Slight tilt and vignette: pure presentation, Phaser untouched. */
+#mute:hover,
+#mute[aria-pressed="true"] {
+  color: var(--paper);
+  background: var(--ink);
+}
+
+#mute:focus-visible {
+  outline: 3px solid var(--stamp);
+  outline-offset: 2px;
+}
+
 #grid {
-  position: relative;
-  perspective: 1200px;
+  width: min(100%, 800px);
+  margin: 10px auto 0;
+  outline: 1px solid var(--ink);
 }
 
-#grid canvas,
-#grid::after {
-  transform: rotateX(6deg);
+/* Phaser sets both dimensions inline. Scale the 4:3 canvas as one image. */
+#grid canvas {
+  display: block;
+  max-width: 100%;
+  height: auto !important;
 }
 
-#grid::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  border-radius: 4px;
-  background: radial-gradient(
-    ellipse at center,
-    transparent 55%,
-    rgb(0 0 0 / 0.5) 100%
-  );
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin-top: 12px;
+  font-size: 0.85rem;
+}
+
+kbd {
+  padding: 1px 4px;
+  border: 1px solid var(--rule);
+  border-bottom-width: 2px;
+  background: #f9efd7;
+  font: inherit;
+  font-weight: bold;
+}
+
+#hud {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  min-width: 0;
+}
+
+.field-position {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 12px;
+  margin: 12px 0 0;
+}
+
+.field-position dd {
+  margin: 0;
+  text-align: right;
+  font-weight: bold;
+}
+
+.manifest h2 {
+  color: var(--stamp);
+}
+
+.manifest-columns {
+  padding-block: 9px 5px;
+  border-bottom: 1px solid var(--rule);
+}
+
+#inventory {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#inventory li {
+  padding-block: 9px;
+  border-bottom: 1px dashed var(--rule);
+  overflow-wrap: anywhere;
+}
+
+#inventory strong {
+  white-space: nowrap;
+}
+
+.scan {
+  padding: 12px 14px;
+  border: 1px solid var(--rule);
+  border-left: 4px solid var(--stamp);
+  background: rgb(255 250 227 / 40%);
+}
+
+#hud .scan h2 {
+  min-height: 0;
+  border: 0;
+  color: var(--stamp);
+  font-size: 0.8rem;
+}
+
+#live {
+  margin: 6px 0 0;
+  min-height: 2.9em;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+  .waybill-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .objective {
+    width: auto;
+  }
 }

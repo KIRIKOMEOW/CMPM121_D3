@@ -11,6 +11,7 @@ const WALK_MS = 120;
 const BUMP_MS = 60;
 const MARKER_COLOR = 0xf5e6a8;
 const BUMP_COLOR = 0xe0533d;
+const SCAN_COLOR = 0xff3434;
 
 const TERRAIN_COLORS: Record<Terrain, number> = {
   sand: 0xe4cf9a,
@@ -36,6 +37,7 @@ function cellCenter({ x, y }: Cell): Cell {
 export class GridView extends Phaser.Scene {
   private readonly seed: number;
   private readonly start: Cell;
+  private readonly harvested: Record<string, boolean>;
   private ground!: Phaser.GameObjects.Graphics;
   private marker!: Phaser.GameObjects.Arc;
 
@@ -43,6 +45,7 @@ export class GridView extends Phaser.Scene {
     super("grid");
     this.seed = state.seed;
     this.start = { ...state.player };
+    this.harvested = { ...state.harvested };
   }
 
   create() {
@@ -51,28 +54,62 @@ export class GridView extends Phaser.Scene {
     this.marker = this.add.circle(x, y, CELL_SIZE * 0.35, MARKER_COLOR);
     this.cameras.main.startFollow(this.marker, true, 0.2, 0.2);
     this.drawCellsAround(this.start);
-    this.fitToDisplay();
+    this.trackDisplaySize();
   }
 
-  // Phaser has no device-pixel setting of its own. So the canvas backing store is
-  // CSS size times devicePixelRatio, the CSS size stays put, and a camera zoom lets
-  // all drawing stay in logical pixels. The media query fires when the ratio changes:
-  // a move to another monitor, or browser zoom. The view's CSS size is fixed, so plain
-  // window resizes need nothing here.
-  private fitToDisplay() {
+  private trackDisplaySize() {
+    const parent = this.scale.canvas.parentElement!;
+    let frame = 0;
+    const scheduleFit = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => this.fitToDisplay(parent));
+    };
+    // A canvas resize can change its parent's height. Update on the next frame
+    // and resize the backing store only when its dimensions change.
+    const observer = new ResizeObserver(scheduleFit);
+    observer.observe(parent);
+
+    // Browser zoom and moving between monitors can change the pixel ratio even
+    // when the layout width stays the same.
+    const listeners = new AbortController();
+    const watchRatio = () => {
+      matchMedia(`(resolution: ${devicePixelRatio}dppx)`).addEventListener(
+        "change",
+        () => {
+          scheduleFit();
+          watchRatio();
+        },
+        { once: true, signal: listeners.signal },
+      );
+    };
+    watchRatio();
+    const stop = () => {
+      observer.disconnect();
+      listeners.abort();
+      cancelAnimationFrame(frame);
+      this.events.off(Phaser.Scenes.Events.SHUTDOWN, stop);
+      this.events.off(Phaser.Scenes.Events.DESTROY, stop);
+    };
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, stop);
+    this.events.once(Phaser.Scenes.Events.DESTROY, stop);
+    this.fitToDisplay(parent);
+  }
+
+  private fitToDisplay(parent: HTMLElement) {
+    const width = Math.min(parent.clientWidth, VIEW_WIDTH);
+    if (width === 0) return;
+    const height = Math.round(width * VIEW_HEIGHT / VIEW_WIDTH);
     const ratio = globalThis.devicePixelRatio || 1;
-    this.scale.resize(
-      Math.round(VIEW_WIDTH * ratio),
-      Math.round(VIEW_HEIGHT * ratio),
-    );
-    this.scale.canvas.style.width = `${VIEW_WIDTH}px`;
-    this.scale.canvas.style.height = `${VIEW_HEIGHT}px`;
+    const pixelWidth = Math.round(width * ratio);
+    const pixelHeight = Math.round(height * ratio);
+    const canvas = this.scale.canvas;
+    if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
+      this.scale.resize(pixelWidth, pixelHeight);
+    }
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+    // One tile always spans 32 CSS pixels. A narrow layout shows fewer tiles.
     this.cameras.main.setZoom(ratio);
-    matchMedia(`(resolution: ${ratio}dppx)`).addEventListener(
-      "change",
-      () => this.fitToDisplay(),
-      { once: true },
-    );
   }
 
   show(event: GameEvent): Promise<void> {
@@ -83,6 +120,8 @@ export class GridView extends Phaser.Scene {
       case "blocked":
         return this.bump(event.at, event.toward);
       case "gathered":
+        this.harvested[`${event.at.x},${event.at.y}`] = true;
+        this.drawHarvestStamp(event.at.x, event.at.y);
         return this.flashHarvest(event.at);
       case "alreadyHarvested":
         return Promise.resolve();
@@ -95,15 +134,21 @@ export class GridView extends Phaser.Scene {
 
   private flashHarvest(at: Cell): Promise<void> {
     const { x, y } = cellCenter(at);
-    const highlight = this.add.rectangle(x, y, CELL_SIZE - 2, CELL_SIZE - 2)
-      .setStrokeStyle(2, MARKER_COLOR);
+    const scan = this.add.rectangle(
+      x,
+      y - CELL_SIZE / 3,
+      CELL_SIZE - 4,
+      3,
+      SCAN_COLOR,
+    );
     return new Promise((done) => {
       this.tweens.add({
-        targets: highlight,
+        targets: scan,
+        y: y + CELL_SIZE / 3,
         alpha: 0,
         duration: WALK_MS * 2,
         onComplete: () => {
-          highlight.destroy();
+          scan.destroy();
           done();
         },
       });
@@ -154,8 +199,21 @@ export class GridView extends Phaser.Scene {
           CELL_SIZE - 1,
           CELL_SIZE - 1,
         );
+        if (this.harvested[`${x},${y}`]) this.drawHarvestStamp(x, y);
       }
     }
+  }
+
+  // A barcode in the corner stays visible when the player stands on the tile.
+  private drawHarvestStamp(x: number, y: number) {
+    const left = x * CELL_SIZE + 2;
+    const top = (y + 1) * CELL_SIZE - 9;
+    this.ground.fillStyle(0x322c27);
+    this.ground.fillRect(left, top, 13, 7);
+    this.ground.fillStyle(0xffe8b7);
+    this.ground.fillRect(left + 2, top + 1, 1, 5);
+    this.ground.fillRect(left + 5, top + 1, 2, 5);
+    this.ground.fillRect(left + 9, top + 1, 1, 5);
   }
 }
 

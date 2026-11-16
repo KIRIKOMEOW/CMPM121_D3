@@ -3,26 +3,57 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>D3 project</title>
+    <title>Last Mile · Air courier waybill</title>
     <link rel="icon" href="data:," />
     <link rel="stylesheet" href="/game/style.css" />
   </head>
   <body>
     <main id="app">
-      <div id="grid"></div>
-      <aside id="hud">
-        <dl>
-          <dt>Position</dt>
-          <dd id="position"></dd>
-          <dt>Terrain</dt>
-          <dd id="terrain"></dd>
-          <dt>Inventory</dt>
-          <dd id="inventory"></dd>
-        </dl>
-        <p>Arrow keys to move. Shift + arrow key to gather.</p>
-        <p id="live" aria-live="polite"></p>
-        <button id="mute" type="button" aria-pressed="false">Sound: on</button>
-      </aside>
+      <header class="waybill-header">
+        <div>
+          <p class="label">Air courier waybill</p>
+          <h1>Last Mile</h1>
+        </div>
+        <p
+          class="objective">Repair the seaplane and deliver the last parcel.</p>
+      </header>
+      <div class="waybill-body">
+        <section class="map" aria-labelledby="map-title">
+          <header class="section-heading">
+            <h2 id="map-title">Atoll map</h2>
+            <button id="mute" type="button" aria-pressed="false">
+              Sound: on
+            </button>
+          </header>
+          <div id="grid"></div>
+          <div class="controls" aria-label="Keyboard controls">
+            <span><kbd>Arrows</kbd> Move</span>
+            <span><kbd>Shift</kbd> + <kbd>Arrows</kbd> Gather adjacent cell</span>
+          </div>
+        </section>
+        <aside id="hud" aria-label="Courier records">
+          <section aria-labelledby="position-title">
+            <h2 id="position-title">Field position</h2>
+            <dl class="field-position">
+              <dt>Coordinates</dt>
+              <dd id="position"></dd>
+              <dt>Terrain</dt>
+              <dd id="terrain"></dd>
+            </dl>
+          </section>
+          <section class="manifest" aria-labelledby="manifest-title">
+            <h2 id="manifest-title">Manifest</h2>
+            <div class="manifest-columns label" aria-hidden="true">
+              <span>Item</span><span>Qty</span>
+            </div>
+            <ul id="inventory" aria-labelledby="manifest-title"></ul>
+          </section>
+          <section class="scan" aria-labelledby="scan-title">
+            <h2 id="scan-title">Latest scan</h2>
+            <p id="live" aria-live="polite">Awaiting first scan.</p>
+          </section>
+        </aside>
+      </div>
     </main>
     <script type="module" src="/game/main.ts"></script>
   </body>
