@@ -53,6 +53,12 @@ export class Hud {
     }
   }
 
+  showDelivery() {
+    element("objective").hidden = true;
+    element("delivery-stamp").hidden = false;
+    element("live").textContent = "Final parcel delivered.";
+  }
+
   private showInventory() {
     const rows = Object.entries(this.inventory).map(([resource, count]) => {
       const row = document.createElement("li");

@@ -30,3 +30,9 @@ For a person, or an agent driving a browser. Run `deno task dev` and open the lo
 - Tab to **Repair manual** below the manifest. Press Space to close it and Enter to reopen it. Focus stays on the heading. With an empty catalog, the manual reads “No repair recipes available yet.”
 - With catalog entries connected, Tab to a recipe and gather a missing material. Check that the displayed shortage changes after the animation and the same button keeps focus. When all materials are available, it reads “Ready to craft.”
 - Use Enter or Space on a recipe, including one with missing materials. Each activation sends one request. If an animation is playing, the request waits for it to finish.
+
+### Delivery preview
+
+- Open `?seed=121`. Move and gather. The waybill still shows its objective and the delivery stamp stays hidden.
+- Open `?seed=121&preview=delivery`. Turn sound on, then activate **Preview delivery** by mouse or keyboard. The red **DELIVERED** stamp replaces the objective, Latest scan reads “Final parcel delivered.”, and a short rising chord plays once. The button disappears. The preview leaves `game.state` unchanged.
+- Reload the preview, switch sound off and activate it again. Check that the same stamp and message appear silently.
