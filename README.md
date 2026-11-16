@@ -13,7 +13,7 @@ Install [Deno](https://docs.deno.com/runtime/getting_started/installation/) and 
 
 **Rule two:** only `game/grid/` may import Phaser. Phaser is here for one narrow job, drawing the grid and moving its camera. Everything around the grid is ordinary web page, so style it with CSS and make it your own.
 
-Phaser has no device-pixel setting of its own, so `grid_view.ts` sizes the canvas backing store to CSS size times `devicePixelRatio` and zooms the camera to match. Draw in logical pixels and the grid stays crisp on high-resolution displays. The view has a fixed CSS size. A change in pixel ratio is handled, and a window resize changes the page layout only.
+The map fits its column up to 800 × 600 CSS pixels. On narrower screens it shows fewer tiles. `grid_view.ts` sizes the canvas backing store to its displayed size times `devicePixelRatio` and zooms the camera to keep tiles at 32 CSS pixels.
 
 Sound uses the browser's Web Audio API directly, because Phaser plays loaded audio but has no synthesis. Audio starts on the first key press or click, as browsers require, and the page plays on silently if audio is unavailable. Change the notes in `sounds.ts` to change how your game sounds.
 

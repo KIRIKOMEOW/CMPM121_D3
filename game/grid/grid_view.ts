@@ -54,28 +54,62 @@ export class GridView extends Phaser.Scene {
     this.marker = this.add.circle(x, y, CELL_SIZE * 0.35, MARKER_COLOR);
     this.cameras.main.startFollow(this.marker, true, 0.2, 0.2);
     this.drawCellsAround(this.start);
-    this.fitToDisplay();
+    this.trackDisplaySize();
   }
 
-  // Phaser has no device-pixel setting of its own. So the canvas backing store is
-  // CSS size times devicePixelRatio, the CSS size stays put, and a camera zoom lets
-  // all drawing stay in logical pixels. The media query fires when the ratio changes:
-  // a move to another monitor, or browser zoom. The view's CSS size is fixed, so plain
-  // window resizes need nothing here.
-  private fitToDisplay() {
+  private trackDisplaySize() {
+    const parent = this.scale.canvas.parentElement!;
+    let frame = 0;
+    const scheduleFit = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => this.fitToDisplay(parent));
+    };
+    // A canvas resize can change its parent's height. Update on the next frame
+    // and resize the backing store only when its dimensions change.
+    const observer = new ResizeObserver(scheduleFit);
+    observer.observe(parent);
+
+    // Browser zoom and moving between monitors can change the pixel ratio even
+    // when the layout width stays the same.
+    const listeners = new AbortController();
+    const watchRatio = () => {
+      matchMedia(`(resolution: ${devicePixelRatio}dppx)`).addEventListener(
+        "change",
+        () => {
+          scheduleFit();
+          watchRatio();
+        },
+        { once: true, signal: listeners.signal },
+      );
+    };
+    watchRatio();
+    const stop = () => {
+      observer.disconnect();
+      listeners.abort();
+      cancelAnimationFrame(frame);
+      this.events.off(Phaser.Scenes.Events.SHUTDOWN, stop);
+      this.events.off(Phaser.Scenes.Events.DESTROY, stop);
+    };
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, stop);
+    this.events.once(Phaser.Scenes.Events.DESTROY, stop);
+    this.fitToDisplay(parent);
+  }
+
+  private fitToDisplay(parent: HTMLElement) {
+    const width = Math.min(parent.clientWidth, VIEW_WIDTH);
+    if (width === 0) return;
+    const height = Math.round(width * VIEW_HEIGHT / VIEW_WIDTH);
     const ratio = globalThis.devicePixelRatio || 1;
-    this.scale.resize(
-      Math.round(VIEW_WIDTH * ratio),
-      Math.round(VIEW_HEIGHT * ratio),
-    );
-    this.scale.canvas.style.width = `${VIEW_WIDTH}px`;
-    this.scale.canvas.style.height = `${VIEW_HEIGHT}px`;
+    const pixelWidth = Math.round(width * ratio);
+    const pixelHeight = Math.round(height * ratio);
+    const canvas = this.scale.canvas;
+    if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
+      this.scale.resize(pixelWidth, pixelHeight);
+    }
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+    // One tile always spans 32 CSS pixels. A narrow layout shows fewer tiles.
     this.cameras.main.setZoom(ratio);
-    matchMedia(`(resolution: ${ratio}dppx)`).addEventListener(
-      "change",
-      () => this.fitToDisplay(),
-      { once: true },
-    );
   }
 
   show(event: GameEvent): Promise<void> {

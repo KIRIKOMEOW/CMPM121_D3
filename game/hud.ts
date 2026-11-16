@@ -2,7 +2,6 @@ import {
   type Cell,
   type GameEvent,
   type GameState,
-  type Resource,
   terrainAt,
 } from "../core/mod.ts";
 
@@ -13,9 +12,9 @@ function element(id: string): HTMLElement {
 function describe(event: GameEvent): string {
   switch (event.type) {
     case "gathered":
-      return `gathered ${event.resource} at ${event.at.x}, ${event.at.y}`;
+      return `Scanned ${event.resource} at ${event.at.x}, ${event.at.y}.`;
     case "alreadyHarvested":
-      return `already harvested at ${event.at.x}, ${event.at.y}`;
+      return `Delivery exception: already harvested at ${event.at.x}, ${event.at.y}.`;
     case "moved":
       return `moved to ${event.to.x}, ${event.to.y}`;
     case "blocked":
@@ -49,19 +48,27 @@ export class Hud {
     if (event.type === "gathered") {
       this.harvested[`${event.at.x},${event.at.y}`] = true;
       this.showPosition();
-      this.updateInventory(event.resource, event.total);
+      this.inventory[event.resource] = event.total;
+      this.showInventory();
     }
   }
 
-  private updateInventory(resource: Resource, total: number) {
-    this.inventory[resource] = total;
-    this.showInventory();
-  }
-
   private showInventory() {
-    element("inventory").textContent = Object.entries(this.inventory)
-      .map(([resource, count]) => `${resource} × ${count}`).join(", ") ||
-      "Empty";
+    const rows = Object.entries(this.inventory).map(([resource, count]) => {
+      const row = document.createElement("li");
+      const name = document.createElement("span");
+      const quantity = document.createElement("strong");
+      name.textContent = resource;
+      quantity.textContent = String(count);
+      row.append(name, quantity);
+      return row;
+    });
+    if (rows.length === 0) {
+      const empty = document.createElement("li");
+      empty.textContent = "No cargo collected.";
+      rows.push(empty);
+    }
+    element("inventory").replaceChildren(...rows);
   }
 
   private showPosition() {
