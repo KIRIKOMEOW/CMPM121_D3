@@ -3,6 +3,7 @@ import { Controller } from "./controller.ts";
 import { startGridView } from "./grid/grid_view.ts";
 import { Hud } from "./hud.ts";
 import { Presenter } from "./presenter.ts";
+import { type ManualEntry, RecipeBook } from "./recipe_book.ts";
 import { Sounds } from "./sounds.ts";
 
 // Where everything is wired together, and the only file that knows every part.
@@ -20,6 +21,16 @@ const sounds = new Sounds(
 const grid = await startGridView(document.getElementById("grid")!, state);
 const presenter = new Presenter([grid, hud, sounds]);
 const controller = new Controller(state, presenter);
+
+// Once core exports its recipe table, map its rows to labels, commands and
+// shortage queries here. The manual reads those queries after playback settles.
+const recipes: ManualEntry[] = [];
+const manual = new RecipeBook(
+  document.querySelector<HTMLUListElement>("#recipes")!,
+  recipes,
+  (command) => controller.submit(command),
+);
+controller.onSettled = () => manual.refresh();
 
 // For poking at in the browser console, such as comparing logical state with
 // presentation state: game.state

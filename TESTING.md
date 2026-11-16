@@ -24,3 +24,9 @@ For a person, or an agent driving a browser. Run `deno task dev` and open the lo
 | 16 | Tap Shift + right arrow, then repeat                      | A red line scans the eastern cell with one high beep and leaves a barcode. One item appears in the Manifest. On repeat, `already harvested` appears and the count stays at one. |
 | 17 | While walking, tap Shift + arrow                          | The walk finishes before the target flashes and Manifest updates. The gather targets the cell next to the new player position.                                                  |
 | 18 | From spawn, gather east, then walk east, west, east       | The barcode stays on the map. Terrain reads `Collected` on the harvested cell both times and drops that label one cell west. The inventory count stays at one.                  |
+
+### Repair manual
+
+- Tab to **Repair manual** below the manifest. Press Space to close it and Enter to reopen it. Focus stays on the heading. With an empty catalog, the manual reads “No repair recipes available yet.”
+- With catalog entries connected, Tab to a recipe and gather a missing material. Check that the displayed shortage changes after the animation and the same button keeps focus. When all materials are available, it reads “Ready to craft.”
+- Use Enter or Space on a recipe, including one with missing materials. Each activation sends one request. If an animation is playing, the request waits for it to finish.

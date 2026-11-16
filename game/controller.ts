@@ -36,6 +36,11 @@ export class Controller {
     addEventListener("blur", () => this.held = []);
   }
 
+  submit(command: Command) {
+    this.pressed = command;
+    this.next();
+  }
+
   private keyDown(event: KeyboardEvent) {
     const direction = ARROWS[event.key];
     if (!direction || event.ctrlKey || event.metaKey || event.altKey) return;
@@ -43,8 +48,7 @@ export class Controller {
     event.preventDefault();
     if (event.repeat) return;
     if (!event.shiftKey) this.held.push(direction);
-    this.pressed = { type: event.shiftKey ? "gather" : "move", direction };
-    this.next();
+    this.submit({ type: event.shiftKey ? "gather" : "move", direction });
   }
 
   private keyUp(event: KeyboardEvent) {

@@ -17,6 +17,12 @@ The map fits its column up to 800 × 600 CSS pixels. On narrower screens it show
 
 Sound uses the browser's Web Audio API directly, because Phaser plays loaded audio but has no synthesis. Audio starts on the first key press or click, as browsers require, and the page plays on silently if audio is unavailable. Change the notes in `sounds.ts` to change how your game sounds.
 
+## Repair manual
+
+Find the repair manual below the manifest. Use Tab to focus its heading and Enter or Space to open or close it. The manual currently shows an empty list message while the core recipe catalog is pending.
+
+To connect the catalog, map its entries in `game/main.ts` to a display label, a core craft command, and a `missing()` query that returns the outstanding quantity for each missing item. The manual refreshes the button text when playback settles. Activating a button submits its command through the controller, including when materials are missing, so the core can report the outcome.
+
 ## Testing entry points
 
 These are supported, for people and for agents driving a browser: `?seed=7` selects a world, `game.state` in the browser console reads logical state (the `game` handle is set in `game/main.ts`), and the `#live` element holds the most recent played event as text, since a canvas is opaque to accessibility-tree tools. [TESTING.md](TESTING.md) is a manual test script. No browser step runs in `deno task ci`.
