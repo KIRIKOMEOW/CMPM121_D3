@@ -6,6 +6,10 @@ function element(id: string): HTMLElement {
 
 function describe(event: GameEvent): string {
   switch (event.type) {
+    case "gathered":
+      return `gathered ${event.resource} at ${event.at.x}, ${event.at.y}`;
+    case "alreadyHarvested":
+      return `already harvested at ${event.at.x}, ${event.at.y}`;
     case "moved":
       return `moved to ${event.to.x}, ${event.to.y}`;
     case "blocked":

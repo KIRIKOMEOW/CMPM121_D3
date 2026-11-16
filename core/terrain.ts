@@ -2,7 +2,14 @@
 // so the world can be effectively unbounded while saved state stays small.
 
 export type Terrain = "sand" | "grove" | "lagoon" | "wreck";
+export type Resource = "driftwood" | "fiber" | "scrap" | "fuel";
 
+export const TERRAIN_YIELD: Readonly<Record<Terrain, Resource>> = {
+  sand: "driftwood",
+  grove: "fiber",
+  wreck: "scrap",
+  lagoon: "fuel",
+};
 export function terrainAt(seed: number, x: number, y: number): Terrain {
   const raw = 0.65 * noise(seed, x, y, 9) + 0.35 * noise(seed + 1, x, y, 3);
   // Every game starts at the origin, so flatten the land there. Otherwise some

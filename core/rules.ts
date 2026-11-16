@@ -2,7 +2,13 @@
 // once, and the events it returns are a record of what happened. Whoever called
 // apply() decides how, or whether, to show them over time.
 
-import { isPassable, type Terrain, terrainAt } from "./terrain.ts";
+import {
+  isPassable,
+  type Resource,
+  type Terrain,
+  TERRAIN_YIELD,
+  terrainAt,
+} from "./terrain.ts";
 
 export type Cell = { x: number; y: number };
 
@@ -18,12 +24,16 @@ export type GameState = {
 };
 
 // Command: https://gameprogrammingpatterns.com/command.html
-export type Command = { type: "move"; direction: Direction };
+export type Command =
+  | { type: "move"; direction: Direction }
+  | { type: "gather"; direction: Direction };
 
 // Domain Event: https://martinfowler.com/eaaDev/DomainEvent.html
 export type GameEvent =
   | { type: "moved"; from: Cell; to: Cell }
-  | { type: "blocked"; at: Cell; toward: Cell; terrain: Terrain };
+  | { type: "blocked"; at: Cell; toward: Cell; terrain: Terrain }
+  | { type: "gathered"; at: Cell; resource: Resource }
+  | { type: "alreadyHarvested"; at: Cell };
 
 const STEPS: Record<Direction, Cell> = {
   north: { x: 0, y: -1 },
@@ -47,7 +57,23 @@ export function apply(state: GameState, command: Command): GameEvent[] {
   switch (command.type) {
     case "move":
       return move(state, command.direction);
+    case "gather":
+      return gather(state, command.direction);
   }
+}
+
+function gather(state: GameState, direction: Direction): GameEvent[] {
+  const step = STEPS[direction];
+  const at = { x: state.player.x + step.x, y: state.player.y + step.y };
+  const key = `${at.x},${at.y}`;
+  if (state.harvested[key]) {
+    return [{ type: "alreadyHarvested", at }];
+  }
+
+  const resource = TERRAIN_YIELD[terrainAt(state.seed, at.x, at.y)];
+  state.inventory[resource] = (state.inventory[resource] ?? 0) + 1;
+  state.harvested[key] = true;
+  return [{ type: "gathered", at, resource }];
 }
 
 function move(state: GameState, direction: Direction): GameEvent[] {

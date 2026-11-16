@@ -25,6 +25,26 @@ function besideEasternCell(passable: boolean): GameState {
   throw new Error("Found no suitable cell on this row.");
 }
 
+Deno.test("gathering from an adjacent lagoon gives fuel only once", () => {
+  const state = besideEasternCell(false);
+  const at = { x: state.player.x + 1, y: state.player.y };
+  assertEquals(terrainAt(SEED, at.x, at.y), "lagoon");
+  const player = { ...state.player };
+
+  const first = apply(state, { type: "gather", direction: "east" });
+
+  assertEquals(first, [{ type: "gathered", at, resource: "fuel" }]);
+  assertEquals(state.inventory, { fuel: 1 });
+  assertEquals(state.harvested, { [`${at.x},${at.y}`]: true });
+  assertEquals(state.player, player);
+  const snapshot = JSON.parse(JSON.stringify(state));
+
+  const second = apply(state, { type: "gather", direction: "east" });
+
+  assertEquals(second, [{ type: "alreadyHarvested", at }]);
+  assertEquals(state, snapshot);
+});
+
 Deno.test("moving onto passable terrain moves the player", () => {
   const state = besideEasternCell(true);
   const { x, y } = state.player;
