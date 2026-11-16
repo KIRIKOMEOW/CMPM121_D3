@@ -42,8 +42,8 @@ export class Controller {
     // Otherwise arrow keys would also scroll the page.
     event.preventDefault();
     if (event.repeat) return;
-    this.held.push(direction);
-    this.pressed = { type: "move", direction };
+    if (!event.shiftKey) this.held.push(direction);
+    this.pressed = { type: event.shiftKey ? "gather" : "move", direction };
     this.next();
   }
 

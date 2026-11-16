@@ -32,7 +32,7 @@ export type Command =
 export type GameEvent =
   | { type: "moved"; from: Cell; to: Cell }
   | { type: "blocked"; at: Cell; toward: Cell; terrain: Terrain }
-  | { type: "gathered"; at: Cell; resource: Resource }
+  | { type: "gathered"; at: Cell; resource: Resource; total: number }
   | { type: "alreadyHarvested"; at: Cell };
 
 const STEPS: Record<Direction, Cell> = {
@@ -71,9 +71,10 @@ function gather(state: GameState, direction: Direction): GameEvent[] {
   }
 
   const resource = TERRAIN_YIELD[terrainAt(state.seed, at.x, at.y)];
-  state.inventory[resource] = (state.inventory[resource] ?? 0) + 1;
+  const total = (state.inventory[resource] ?? 0) + 1;
+  state.inventory[resource] = total;
   state.harvested[key] = true;
-  return [{ type: "gathered", at, resource }];
+  return [{ type: "gathered", at, resource, total }];
 }
 
 function move(state: GameState, direction: Direction): GameEvent[] {

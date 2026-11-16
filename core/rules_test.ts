@@ -33,7 +33,7 @@ Deno.test("gathering from an adjacent lagoon gives fuel only once", () => {
 
   const first = apply(state, { type: "gather", direction: "east" });
 
-  assertEquals(first, [{ type: "gathered", at, resource: "fuel" }]);
+  assertEquals(first, [{ type: "gathered", at, resource: "fuel", total: 1 }]);
   assertEquals(state.inventory, { fuel: 1 });
   assertEquals(state.harvested, { [`${at.x},${at.y}`]: true });
   assertEquals(state.player, player);

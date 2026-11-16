@@ -83,6 +83,7 @@ export class GridView extends Phaser.Scene {
       case "blocked":
         return this.bump(event.at, event.toward);
       case "gathered":
+        return this.flashHarvest(event.at);
       case "alreadyHarvested":
         return Promise.resolve();
       default:
@@ -90,6 +91,23 @@ export class GridView extends Phaser.Scene {
         event satisfies never;
         return Promise.resolve();
     }
+  }
+
+  private flashHarvest(at: Cell): Promise<void> {
+    const { x, y } = cellCenter(at);
+    const highlight = this.add.rectangle(x, y, CELL_SIZE - 2, CELL_SIZE - 2)
+      .setStrokeStyle(2, MARKER_COLOR);
+    return new Promise((done) => {
+      this.tweens.add({
+        targets: highlight,
+        alpha: 0,
+        duration: WALK_MS * 2,
+        onComplete: () => {
+          highlight.destroy();
+          done();
+        },
+      });
+    });
   }
 
   private walk(to: Cell): Promise<void> {
