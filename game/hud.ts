@@ -1,4 +1,5 @@
 import {
+  type Cell,
   type GameEvent,
   type GameState,
   type Resource,
@@ -27,18 +28,27 @@ function describe(event: GameEvent): string {
 export class Hud {
   private readonly seed: number;
   private readonly inventory: Record<string, number>;
+  private readonly harvested: Record<string, boolean>;
+  private position: Cell;
 
   constructor(state: GameState) {
     this.seed = state.seed;
     this.inventory = { ...state.inventory };
+    this.harvested = { ...state.harvested };
+    this.position = { ...state.player };
     this.showInventory();
-    this.showPosition(state.player.x, state.player.y);
+    this.showPosition();
   }
 
   show(event: GameEvent) {
     element("live").textContent = describe(event);
-    if (event.type === "moved") this.showPosition(event.to.x, event.to.y);
+    if (event.type === "moved") {
+      this.position = event.to;
+      this.showPosition();
+    }
     if (event.type === "gathered") {
+      this.harvested[`${event.at.x},${event.at.y}`] = true;
+      this.showPosition();
       this.updateInventory(event.resource, event.total);
     }
   }
@@ -54,8 +64,12 @@ export class Hud {
       "Empty";
   }
 
-  private showPosition(x: number, y: number) {
+  private showPosition() {
+    const { x, y } = this.position;
+    const terrain = terrainAt(this.seed, x, y);
     element("position").textContent = `${x}, ${y}`;
-    element("terrain").textContent = terrainAt(this.seed, x, y);
+    element("terrain").textContent = this.harvested[`${x},${y}`]
+      ? `${terrain} · Collected`
+      : terrain;
   }
 }

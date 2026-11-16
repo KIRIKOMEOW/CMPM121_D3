@@ -11,6 +11,7 @@ const WALK_MS = 120;
 const BUMP_MS = 60;
 const MARKER_COLOR = 0xf5e6a8;
 const BUMP_COLOR = 0xe0533d;
+const SCAN_COLOR = 0xff3434;
 
 const TERRAIN_COLORS: Record<Terrain, number> = {
   sand: 0xe4cf9a,
@@ -36,6 +37,7 @@ function cellCenter({ x, y }: Cell): Cell {
 export class GridView extends Phaser.Scene {
   private readonly seed: number;
   private readonly start: Cell;
+  private readonly harvested: Record<string, boolean>;
   private ground!: Phaser.GameObjects.Graphics;
   private marker!: Phaser.GameObjects.Arc;
 
@@ -43,6 +45,7 @@ export class GridView extends Phaser.Scene {
     super("grid");
     this.seed = state.seed;
     this.start = { ...state.player };
+    this.harvested = { ...state.harvested };
   }
 
   create() {
@@ -83,6 +86,8 @@ export class GridView extends Phaser.Scene {
       case "blocked":
         return this.bump(event.at, event.toward);
       case "gathered":
+        this.harvested[`${event.at.x},${event.at.y}`] = true;
+        this.drawHarvestStamp(event.at.x, event.at.y);
         return this.flashHarvest(event.at);
       case "alreadyHarvested":
         return Promise.resolve();
@@ -95,15 +100,21 @@ export class GridView extends Phaser.Scene {
 
   private flashHarvest(at: Cell): Promise<void> {
     const { x, y } = cellCenter(at);
-    const highlight = this.add.rectangle(x, y, CELL_SIZE - 2, CELL_SIZE - 2)
-      .setStrokeStyle(2, MARKER_COLOR);
+    const scan = this.add.rectangle(
+      x,
+      y - CELL_SIZE / 3,
+      CELL_SIZE - 4,
+      3,
+      SCAN_COLOR,
+    );
     return new Promise((done) => {
       this.tweens.add({
-        targets: highlight,
+        targets: scan,
+        y: y + CELL_SIZE / 3,
         alpha: 0,
         duration: WALK_MS * 2,
         onComplete: () => {
-          highlight.destroy();
+          scan.destroy();
           done();
         },
       });
@@ -154,8 +165,21 @@ export class GridView extends Phaser.Scene {
           CELL_SIZE - 1,
           CELL_SIZE - 1,
         );
+        if (this.harvested[`${x},${y}`]) this.drawHarvestStamp(x, y);
       }
     }
+  }
+
+  // A barcode in the corner stays visible when the player stands on the tile.
+  private drawHarvestStamp(x: number, y: number) {
+    const left = x * CELL_SIZE + 2;
+    const top = (y + 1) * CELL_SIZE - 9;
+    this.ground.fillStyle(0x322c27);
+    this.ground.fillRect(left, top, 13, 7);
+    this.ground.fillStyle(0xffe8b7);
+    this.ground.fillRect(left + 2, top + 1, 1, 5);
+    this.ground.fillRect(left + 5, top + 1, 2, 5);
+    this.ground.fillRect(left + 9, top + 1, 1, 5);
   }
 }
 

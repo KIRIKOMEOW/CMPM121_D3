@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assert, assertEquals } from "@std/assert";
 import {
   apply,
   type GameState,
@@ -57,6 +57,26 @@ Deno.test("moving onto passable terrain moves the player", () => {
     from: { x, y },
     to: { x: x + 1, y },
   }]);
+});
+
+Deno.test("a gathered event keeps its cell and count after later commands", () => {
+  // Seed 121 starts on a stretch of grove, so both gathers yield the same item.
+  const state = newGame(SEED);
+  const gather = { type: "gather", direction: "east" } as const;
+  const [first] = apply(state, gather);
+  assert(first.type === "gathered");
+  assertEquals(first.total, 1);
+  const snapshot = JSON.parse(JSON.stringify(first));
+
+  apply(state, { type: "move", direction: "east" });
+  const [second] = apply(state, gather);
+  apply(state, { type: "move", direction: "east" });
+
+  assert(second.type === "gathered");
+  assertEquals(second.resource, first.resource);
+  assertEquals(state.inventory[first.resource], 2);
+  assertEquals(state.player, { x: 2, y: 0 });
+  assertEquals(first, snapshot);
 });
 
 Deno.test("a blocked move changes nothing and reports why", () => {
