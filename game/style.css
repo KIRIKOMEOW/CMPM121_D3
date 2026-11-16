@@ -125,7 +125,9 @@ h2 {
   background: var(--ink);
 }
 
-#mute:focus-visible {
+#mute:focus-visible,
+.repair-manual summary:focus-visible,
+.recipe-button:focus-visible {
   outline: 3px solid var(--stamp);
   outline-offset: 2px;
 }
@@ -189,7 +191,8 @@ kbd {
   border-bottom: 1px solid var(--rule);
 }
 
-#inventory {
+#inventory,
+#recipes {
   margin: 0;
   padding: 0;
   list-style: none;
@@ -203,6 +206,59 @@ kbd {
 
 #inventory strong {
   white-space: nowrap;
+}
+
+.repair-manual {
+  border: 1px solid var(--rule);
+}
+
+.repair-manual summary {
+  padding: 9px 12px;
+  background: #e7d6b0;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+}
+
+.repair-manual[open] summary {
+  border-bottom: 1px solid var(--rule);
+}
+
+.recipe-empty,
+.recipe-button {
+  padding: 10px 12px;
+  overflow-wrap: anywhere;
+}
+
+.recipe-empty,
+.recipe-status {
+  font-size: 0.85rem;
+}
+
+#recipes li + li {
+  border-top: 1px dashed var(--rule);
+}
+
+.recipe-button {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.recipe-name {
+  font-weight: bold;
+}
+
+.repair-manual summary:hover,
+.recipe-button:hover {
+  background: #deca9f;
 }
 
 .scan {
