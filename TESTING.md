@@ -13,7 +13,7 @@ For a person, or an agent driving a browser. Run `deno task dev` and open the lo
 | 5  | Mash arrows quickly, then stop                            | The marker settles on the cell `player` reports.                                                                                                                                |
 | 6  | Hold an arrow down                                        | The marker keeps walking. Holding into a wall repeats the bump.                                                                                                                 |
 | 7  | Load `?seed=7`                                            | A different map.                                                                                                                                                                |
-| 8  | Run `game.state` in the console                           | Plain data includes `seed`, `player`, `inventory`, and `harvested`. No terrain list.                                                                                            |
+| 8  | Run `game.state` in the console                           | Plain data includes `seed`, `player`, `inventory`, `harvested`, and `ended`. A new game has `ended: false`.                                                                     |
 | 9  | Press an arrow several times                              | Position and Terrain in the panel change as each step plays, and never ahead of the marker.                                                                                     |
 | 10 | Make the window short, then press the down arrow          | The page does not scroll. The marker moves.                                                                                                                                     |
 | 11 | Click the sound button, then press an arrow               | The button reads `Sound: off`, and the arrow still moves the marker.                                                                                                            |
@@ -34,5 +34,6 @@ For a person, or an agent driving a browser. Run `deno task dev` and open the lo
 ### Delivery preview
 
 - Open `?seed=121`. Move and gather. The waybill still shows its objective and the delivery stamp stays hidden.
-- Open `?seed=121&preview=delivery`. Turn sound on, then activate **Preview delivery** by mouse or keyboard. The red **DELIVERED** stamp replaces the objective, Latest scan reads “Final parcel delivered.”, and a short rising chord plays once. The button disappears. The preview leaves `game.state` unchanged.
+- Open `?seed=121&preview=delivery`. Turn sound on, then activate **Preview delivery** by mouse or keyboard. The red **DELIVERED** stamp replaces the objective, Latest scan reads “Final parcel delivered.”, and a short rising chord plays once. The button disappears. The preview leaves `game.state.ended` false. You can still walk and gather.
 - Reload the preview, switch sound off and activate it again. Check that the same stamp and message appear silently.
+- To check playback order, reload the preview and run `game.controller.submit({ type: "move", direction: "east" }); document.querySelector("#preview-delivery").click()` in the browser console. The marker finishes the step before the stamp appears.

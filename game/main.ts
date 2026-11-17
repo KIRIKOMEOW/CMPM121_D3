@@ -41,8 +41,7 @@ if (params.get("preview") === "delivery") {
   button.hidden = false;
   button.addEventListener("click", () => {
     button.hidden = true;
-    hud.showDelivery();
-    sounds.playDelivery();
+    presenter.play([{ type: "delivered" }]);
   }, { once: true });
 }
 

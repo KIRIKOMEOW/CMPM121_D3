@@ -19,6 +19,8 @@ function describe(event: GameEvent): string {
       return `moved to ${event.to.x}, ${event.to.y}`;
     case "blocked":
       return `blocked by ${event.terrain} at ${event.toward.x}, ${event.toward.y}`;
+    case "delivered":
+      return "Final parcel delivered.";
   }
 }
 
@@ -51,12 +53,10 @@ export class Hud {
       this.inventory[event.resource] = event.total;
       this.showInventory();
     }
-  }
-
-  showDelivery() {
-    element("objective").hidden = true;
-    element("delivery-stamp").hidden = false;
-    element("live").textContent = "Final parcel delivered.";
+    if (event.type === "delivered") {
+      element("objective").hidden = true;
+      element("delivery-stamp").hidden = false;
+    }
   }
 
   private showInventory() {

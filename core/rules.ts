@@ -18,6 +18,7 @@ export type Direction = "north" | "south" | "east" | "west";
 // it: besides the seed, only what the player has caused belongs here.
 export type GameState = {
   seed: number;
+  ended: boolean;
   player: Cell;
   inventory: Record<string, number>;
   harvested: Record<string, boolean>;
@@ -33,7 +34,8 @@ export type GameEvent =
   | { type: "moved"; from: Cell; to: Cell }
   | { type: "blocked"; at: Cell; toward: Cell; terrain: Terrain }
   | { type: "gathered"; at: Cell; resource: Resource; total: number }
-  | { type: "alreadyHarvested"; at: Cell };
+  | { type: "alreadyHarvested"; at: Cell }
+  | { type: "delivered" };
 
 const STEPS: Record<Direction, Cell> = {
   north: { x: 0, y: -1 },
@@ -46,6 +48,7 @@ const STEPS: Record<Direction, Cell> = {
 export function newGame(seed: number): GameState {
   return {
     seed,
+    ended: false,
     player: { x: 0, y: 0 },
     inventory: {},
     harvested: {},
@@ -54,6 +57,7 @@ export function newGame(seed: number): GameState {
 
 // The single way in. It updates the state it is given and returns the events.
 export function apply(state: GameState, command: Command): GameEvent[] {
+  if (state.ended) return [];
   switch (command.type) {
     case "move":
       return move(state, command.direction);

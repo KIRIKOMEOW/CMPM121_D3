@@ -8,6 +8,7 @@ const SOUND_FOR: Record<GameEvent["type"], SoundName | null> = {
   blocked: "bump",
   gathered: "scan",
   alreadyHarvested: "bump",
+  delivered: "delivery",
 };
 
 type Note = {
@@ -60,11 +61,6 @@ export class Sounds {
     if (sound) this.play(sound);
   }
 
-  playDelivery() {
-    // The four notes overlap, so give each voice a softer attack.
-    this.play("delivery", VOLUME * 0.65);
-  }
-
   private setMuted(muted: boolean) {
     this.muted = muted;
     this.button.textContent = muted ? "Sound: off" : "Sound: on";
@@ -84,9 +80,11 @@ export class Sounds {
     }
   }
 
-  private play(sound: SoundName, volume = VOLUME) {
+  private play(sound: SoundName) {
     const { context } = this;
     if (!context || this.muted) return;
+    // The delivery chord's four notes overlap, so soften each voice.
+    const volume = sound === "delivery" ? VOLUME * 0.65 : VOLUME;
     for (const { frequency, seconds, wave, at = 0 } of NOTES[sound]) {
       const begin = context.currentTime + at;
       const oscillator = context.createOscillator();
