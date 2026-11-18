@@ -1,7 +1,13 @@
 // The only folder allowed to import Phaser, and for one job: drawing the grid.
 // Input, the HUD, sound, and the order of events all live outside it.
 import Phaser from "phaser";
-import type { Cell, GameEvent, GameState, Terrain } from "../../core/mod.ts";
+import type {
+  Cell,
+  Direction,
+  GameEvent,
+  GameState,
+  Terrain,
+} from "../../core/mod.ts";
 import { terrainAt } from "../../core/mod.ts";
 
 export const CELL_SIZE = 32;
@@ -9,9 +15,9 @@ const VIEW_WIDTH = 800;
 const VIEW_HEIGHT = 600;
 const WALK_MS = 120;
 const BUMP_MS = 60;
-const MARKER_COLOR = 0xf5e6a8;
 const BUMP_COLOR = 0xe0533d;
 const SCAN_COLOR = 0xff3434;
+const COURIER_DIRECTIONS: Direction[] = ["south", "west", "east", "north"];
 
 const TERRAIN_COLORS: Record<Terrain, number> = {
   sand: 0xe4cf9a,
@@ -36,25 +42,64 @@ function cellCenter({ x, y }: Cell): Cell {
 // Humble Object: http://xunitpatterns.com/Humble%20Object.html
 export class GridView extends Phaser.Scene {
   private readonly seed: number;
+  private readonly onReady: () => void;
   private readonly start: Cell;
   private readonly harvested: Record<string, boolean>;
   private ground!: Phaser.GameObjects.Graphics;
-  private marker!: Phaser.GameObjects.Arc;
+  private marker!: Phaser.GameObjects.Sprite;
+  private facing: Direction = "south";
 
-  constructor(state: GameState) {
+  constructor(state: GameState, onReady: () => void) {
     super("grid");
     this.seed = state.seed;
+    this.onReady = onReady;
     this.start = { ...state.player };
     this.harvested = { ...state.harvested };
   }
 
+  preload() {
+    this.load.image(
+      "courier",
+      new URL("./courier-walk.png", import.meta.url).href,
+    );
+  }
+
   create() {
+    const texture = this.textures.get("courier");
+    const source = texture.getSourceImage() as HTMLImageElement;
+    for (const [row, direction] of COURIER_DIRECTIONS.entries()) {
+      for (let pose = 0; pose < 4; pose++) {
+        const left = Math.floor(pose * source.width / 4);
+        const top = Math.floor(row * source.height / 4);
+        texture.add(
+          `${direction}-${pose}`,
+          0,
+          left,
+          top,
+          Math.floor((pose + 1) * source.width / 4) - left,
+          Math.floor((row + 1) * source.height / 4) - top,
+        );
+      }
+      this.anims.create({
+        key: `walk-${direction}`,
+        frames: [0, 1, 2, 3].map((pose) => ({
+          key: "courier",
+          frame: `${direction}-${pose}`,
+        })),
+        duration: WALK_MS,
+      });
+    }
+    texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
     this.ground = this.add.graphics();
     const { x, y } = cellCenter(this.start);
-    this.marker = this.add.circle(x, y, CELL_SIZE * 0.35, MARKER_COLOR);
+    this.marker = this.add.sprite(x, y, "courier", "south-0")
+      .setOrigin(0.5, 0.92)
+      .setDisplaySize(40, 40)
+      .setDepth(1);
     this.cameras.main.startFollow(this.marker, true, 0.2, 0.2);
     this.drawCellsAround(this.start);
     this.trackDisplaySize();
+    this.onReady();
   }
 
   private trackDisplaySize() {
@@ -116,7 +161,7 @@ export class GridView extends Phaser.Scene {
     switch (event.type) {
       case "moved":
         this.drawCellsAround(event.to);
-        return this.walk(event.to);
+        return this.walk(event.from, event.to);
       case "blocked":
         return this.bump(event.at, event.toward);
       case "gathered":
@@ -158,13 +203,24 @@ export class GridView extends Phaser.Scene {
     });
   }
 
-  private walk(to: Cell): Promise<void> {
+  private face(from: Cell, to: Cell) {
+    if (to.x !== from.x) this.facing = to.x > from.x ? "east" : "west";
+    else if (to.y !== from.y) this.facing = to.y > from.y ? "south" : "north";
+    this.marker.setFrame(`${this.facing}-0`);
+  }
+
+  private walk(from: Cell, to: Cell): Promise<void> {
+    this.face(from, to);
+    this.marker.play(`walk-${this.facing}`);
     return new Promise((done) => {
       this.tweens.add({
         targets: this.marker,
         ...cellCenter(to),
         duration: WALK_MS,
-        onComplete: () => done(),
+        onComplete: () => {
+          this.marker.stop().setFrame(`${this.facing}-0`);
+          done();
+        },
       });
     });
   }
@@ -173,7 +229,8 @@ export class GridView extends Phaser.Scene {
   private bump(at: Cell, toward: Cell): Promise<void> {
     const start = cellCenter(at);
     const target = cellCenter(toward);
-    this.marker.setFillStyle(BUMP_COLOR);
+    this.face(at, toward);
+    this.marker.setTint(BUMP_COLOR);
     return new Promise((done) => {
       this.tweens.add({
         targets: this.marker,
@@ -182,7 +239,7 @@ export class GridView extends Phaser.Scene {
         duration: BUMP_MS,
         yoyo: true,
         onComplete: () => {
-          this.marker.setFillStyle(MARKER_COLOR);
+          this.marker.clearTint();
           done();
         },
       });
@@ -227,7 +284,7 @@ export function startGridView(
   state: GameState,
 ): Promise<GridView> {
   return new Promise((ready) => {
-    const view = new GridView(state);
+    const view = new GridView(state, () => ready(view));
     new Phaser.Game({
       type: Phaser.AUTO,
       parent,
@@ -238,9 +295,6 @@ export function startGridView(
       audio: { noAudio: true },
       input: { keyboard: false, mouse: false, touch: false, gamepad: false },
       scene: view,
-      callbacks: {
-        postBoot: () => ready(view),
-      },
     });
   });
 }

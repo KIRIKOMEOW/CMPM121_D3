@@ -44,3 +44,9 @@ For a person, or an agent driving a browser. Run `deno task dev` and open the lo
 - Gather two fiber, craft rope, gather two driftwood and craft hull, gather three scrap and craft engine, then gather two fuel and choose delivery. All recipes support Tab and Enter or Space.
 - After each craft, consumed cargo disappears and its output appears. A recipe activated during a walk waits for playback. The manual refreshes when playback settles.
 - Delivery consumes the hull, engine, and fuel. The delivered stamp appears with the arrival chord. Further movement and gathering leave the state unchanged, and recipe buttons become disabled. Reload to start another game.
+
+### Courier sprite
+
+- Reload and check the courier has a red cap, navy uniform, and mailbag on transparent terrain. Tap all four arrows, then hold an arrow. The courier faces the movement direction, cycles walking poses, and stands still after releasing the key.
+- Walk toward lagoon. The courier faces the lagoon, flashes red while bumping, then returns to normal colors on the original cell.
+- Gather, craft, and resize the window. Check the courier remains aligned with its cell and the map follows it. Repeat after a production build to check the image loads from its bundled URL.
