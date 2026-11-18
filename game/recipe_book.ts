@@ -8,7 +8,11 @@ export type ManualEntry = {
 };
 
 export class RecipeBook {
-  private readonly rows: { entry: ManualEntry; status: HTMLElement }[];
+  private readonly rows: {
+    entry: ManualEntry;
+    status: HTMLElement;
+    button: HTMLButtonElement;
+  }[];
 
   constructor(
     list: HTMLUListElement,
@@ -33,7 +37,7 @@ export class RecipeBook {
       });
       row.append(button);
       list.append(row);
-      return { entry, status };
+      return { entry, status, button };
     });
     if (entries.length === 0) {
       const empty = document.createElement("li");
@@ -45,11 +49,14 @@ export class RecipeBook {
   }
 
   // Update the text in place so a keyboard player keeps the focused button.
-  refresh() {
-    for (const { entry, status } of this.rows) {
+  refresh(ended = false) {
+    for (const { entry, status, button } of this.rows) {
+      button.disabled = ended;
       const missing = Object.entries(entry.missing())
         .map(([item, count]) => `${item} × ${count}`);
-      status.textContent = missing.length
+      status.textContent = ended
+        ? "Delivered"
+        : missing.length
         ? `Need ${missing.join(", ")}`
         : "Ready to craft";
     }

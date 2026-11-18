@@ -2,6 +2,7 @@
 // once, and the events it returns are a record of what happened. Whoever called
 // apply() decides how, or whether, to show them over time.
 
+import { missingIngredients, RECIPES } from "./recipes.ts";
 import {
   isPassable,
   type Resource,
@@ -27,7 +28,8 @@ export type GameState = {
 // Command: https://gameprogrammingpatterns.com/command.html
 export type Command =
   | { type: "move"; direction: Direction }
-  | { type: "gather"; direction: Direction };
+  | { type: "gather"; direction: Direction }
+  | { type: "craft"; recipe: string };
 
 // Domain Event: https://martinfowler.com/eaaDev/DomainEvent.html
 export type GameEvent =
@@ -35,6 +37,8 @@ export type GameEvent =
   | { type: "blocked"; at: Cell; toward: Cell; terrain: Terrain }
   | { type: "gathered"; at: Cell; resource: Resource; total: number }
   | { type: "alreadyHarvested"; at: Cell }
+  | { type: "crafted"; label: string; inventory: Record<string, number> }
+  | { type: "craftFailed"; reason: string }
   | { type: "delivered" };
 
 const STEPS: Record<Direction, Cell> = {
@@ -63,7 +67,38 @@ export function apply(state: GameState, command: Command): GameEvent[] {
       return move(state, command.direction);
     case "gather":
       return gather(state, command.direction);
+    case "craft":
+      return craft(state, command.recipe);
   }
+}
+
+function craft(state: GameState, recipeId: string): GameEvent[] {
+  if (!Object.hasOwn(RECIPES, recipeId)) {
+    return [{ type: "craftFailed", reason: "Unknown recipe." }];
+  }
+  const recipe = RECIPES[recipeId];
+  const missing = missingIngredients(state, recipe);
+  if (Object.keys(missing).length > 0) {
+    const needed = Object.entries(missing)
+      .map(([item, count]) => `${item} × ${count}`).join(", ");
+    return [{ type: "craftFailed", reason: `Need ${needed}.` }];
+  }
+
+  for (const [item, count] of Object.entries(recipe.inputs)) {
+    state.inventory[item] -= count;
+    if (state.inventory[item] === 0) delete state.inventory[item];
+  }
+  state.inventory[recipe.output] = (state.inventory[recipe.output] ?? 0) + 1;
+  const events: GameEvent[] = [{
+    type: "crafted",
+    label: recipe.label,
+    inventory: { ...state.inventory },
+  }];
+  if (recipe.endsGame) {
+    state.ended = true;
+    events.push({ type: "delivered" });
+  }
+  return events;
 }
 
 function gather(state: GameState, direction: Direction): GameEvent[] {

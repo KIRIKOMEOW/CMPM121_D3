@@ -12,6 +12,7 @@ Deno.test("an ended game ignores every command and keeps its state", () => {
   const commands = {
     move: { type: "move", direction: "east" },
     gather: { type: "gather", direction: "east" },
+    craft: { type: "craft", recipe: "rope" },
   } satisfies { [K in Command["type"]]: Extract<Command, { type: K }> };
   for (const command of Object.values(commands)) {
     assertEquals(apply(state, command), []);

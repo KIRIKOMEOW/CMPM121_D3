@@ -124,6 +124,8 @@ export class GridView extends Phaser.Scene {
         this.drawHarvestStamp(event.at.x, event.at.y);
         return this.flashHarvest(event.at);
       case "alreadyHarvested":
+      case "crafted":
+      case "craftFailed":
       case "delivered":
         return Promise.resolve();
       default:

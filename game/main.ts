@@ -1,4 +1,4 @@
-import { newGame } from "../core/mod.ts";
+import { missingIngredients, newGame, RECIPES } from "../core/mod.ts";
 import { Controller } from "./controller.ts";
 import { startGridView } from "./grid/grid_view.ts";
 import { Hud } from "./hud.ts";
@@ -23,15 +23,17 @@ const grid = await startGridView(document.getElementById("grid")!, state);
 const presenter = new Presenter([grid, hud, sounds]);
 const controller = new Controller(state, presenter);
 
-// Once core exports its recipe table, map its rows to labels, commands and
-// shortage queries here. The manual reads those queries after playback settles.
-const recipes: ManualEntry[] = [];
+const recipes: ManualEntry[] = Object.entries(RECIPES).map(([id, recipe]) => ({
+  label: recipe.label,
+  command: { type: "craft", recipe: id },
+  missing: () => missingIngredients(state, recipe),
+}));
 const manual = new RecipeBook(
   document.querySelector<HTMLUListElement>("#recipes")!,
   recipes,
   (command) => controller.submit(command),
 );
-controller.onSettled = () => manual.refresh();
+controller.onSettled = () => manual.refresh(state.ended);
 
 // Exercise the presentation with a user gesture while the capstone is pending.
 if (params.get("preview") === "delivery") {

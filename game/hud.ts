@@ -19,6 +19,10 @@ function describe(event: GameEvent): string {
       return `moved to ${event.to.x}, ${event.to.y}`;
     case "blocked":
       return `blocked by ${event.terrain} at ${event.toward.x}, ${event.toward.y}`;
+    case "crafted":
+      return event.label + ".";
+    case "craftFailed":
+      return event.reason;
     case "delivered":
       return "Final parcel delivered.";
   }
@@ -51,6 +55,13 @@ export class Hud {
       this.harvested[`${event.at.x},${event.at.y}`] = true;
       this.showPosition();
       this.inventory[event.resource] = event.total;
+      this.showInventory();
+    }
+    if (event.type === "crafted") {
+      for (const item of Object.keys(this.inventory)) {
+        delete this.inventory[item];
+      }
+      Object.assign(this.inventory, event.inventory);
       this.showInventory();
     }
     if (event.type === "delivered") {

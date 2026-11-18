@@ -37,3 +37,10 @@ For a person, or an agent driving a browser. Run `deno task dev` and open the lo
 - Open `?seed=121&preview=delivery`. Turn sound on, then activate **Preview delivery** by mouse or keyboard. The red **DELIVERED** stamp replaces the objective, Latest scan reads “Final parcel delivered.”, and a short rising chord plays once. The button disappears. The preview leaves `game.state.ended` false. You can still walk and gather.
 - Reload the preview, switch sound off and activate it again. Check that the same stamp and message appear silently.
 - To check playback order, reload the preview and run `game.controller.submit({ type: "move", direction: "east" }); document.querySelector("#preview-delivery").click()` in the browser console. The marker finishes the step before the stamp appears.
+
+### Crafting and delivery
+
+- Reload a regular game. The Repair manual lists rope, hull, engine, and delivery with the quantities still needed. Tab to a recipe and press Enter with insufficient cargo. Latest scan explains what is missing and cargo stays unchanged.
+- Gather two fiber, craft rope, gather two driftwood and craft hull, gather three scrap and craft engine, then gather two fuel and choose delivery. All recipes support Tab and Enter or Space.
+- After each craft, consumed cargo disappears and its output appears. A recipe activated during a walk waits for playback. The manual refreshes when playback settles.
+- Delivery consumes the hull, engine, and fuel. The delivered stamp appears with the arrival chord. Further movement and gathering leave the state unchanged, and recipe buttons become disabled. Reload to start another game.
