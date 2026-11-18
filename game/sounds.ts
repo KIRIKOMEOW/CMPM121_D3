@@ -47,9 +47,12 @@ export class Sounds {
   context: AudioContext | null = null;
   private muted = false;
   private readonly button: HTMLButtonElement;
+  private readonly music: HTMLAudioElement;
 
   constructor(button: HTMLButtonElement) {
     this.button = button;
+    this.music = document.querySelector<HTMLAudioElement>("#background-music")!;
+    this.music.volume = 0.18;
     const start = () => this.startContext();
     addEventListener("keydown", start, { once: true });
     addEventListener("pointerdown", start, { once: true });
@@ -67,6 +70,7 @@ export class Sounds {
 
   private setMuted(muted: boolean) {
     this.muted = muted;
+    if (muted) this.music.pause();
     this.button.textContent = muted ? "Sound: off" : "Sound: on";
     this.button.setAttribute("aria-pressed", String(muted));
     this.startContext();
@@ -75,6 +79,10 @@ export class Sounds {
   }
 
   private startContext() {
+    if (!this.muted && this.music.paused) {
+      // The browser can require another user gesture before allowing playback.
+      void this.music.play().catch(() => {});
+    }
     try {
       this.context ??= new AudioContext();
       this.context.resume();

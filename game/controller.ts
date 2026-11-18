@@ -2,11 +2,15 @@ import { apply, type Command, type Direction } from "../core/mod.ts";
 import type { GameState } from "../core/mod.ts";
 import type { Presenter } from "./presenter.ts";
 
-const ARROWS: Record<string, Direction> = {
-  ArrowUp: "north",
-  ArrowDown: "south",
-  ArrowLeft: "west",
-  ArrowRight: "east",
+const MOVEMENT_KEYS: Record<string, Direction> = {
+  arrowup: "north",
+  arrowdown: "south",
+  arrowleft: "west",
+  arrowright: "east",
+  w: "north",
+  s: "south",
+  a: "west",
+  d: "east",
 };
 
 // Input in, core in the middle, presenter out. None of those three knows the others,
@@ -17,7 +21,7 @@ export class Controller {
   private readonly presenter: Presenter;
   // A tap made during a walk, kept until the presenter is free.
   private pressed: Command | null = null;
-  private held: Direction[] = [];
+  private held: string[] = [];
   // Runs when nothing is playing and no next command has started, so it is safe
   // to read the core here. During playback, the core is ahead of what the player
   // has seen, and reading it would show the future.
@@ -53,19 +57,19 @@ export class Controller {
       if (!event.repeat) this.submit({ type: "interact" });
       return;
     }
-    const direction = ARROWS[event.key];
-    if (!direction || event.ctrlKey || event.metaKey || event.altKey) return;
+    const key = event.key.toLowerCase();
+    const direction = MOVEMENT_KEYS[key];
+    if (!direction) return;
     // Otherwise arrow keys would also scroll the page.
     event.preventDefault();
     if (event.repeat) return;
-    if (!event.shiftKey) this.held.push(direction);
+    if (!event.shiftKey && !this.held.includes(key)) this.held.push(key);
     this.submit({ type: event.shiftKey ? "gather" : "move", direction });
   }
 
   private keyUp(event: KeyboardEvent) {
-    this.held = this.held.filter((direction) =>
-      direction !== ARROWS[event.key]
-    );
+    const key = event.key.toLowerCase();
+    this.held = this.held.filter((heldKey) => heldKey !== key);
   }
 
   private next() {
@@ -73,7 +77,7 @@ export class Controller {
     // busy state lives here in game/: the core never learns about animation.
     if (this.presenter.busy) return;
 
-    const held = this.held.at(-1);
+    const held = MOVEMENT_KEYS[this.held.at(-1) ?? ""];
     const command: Command | null = this.pressed ??
       (held ? { type: "move", direction: held } : null);
     this.pressed = null;

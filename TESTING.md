@@ -15,9 +15,9 @@ Run `deno task dev` and open the local URL with `?seed=121`. Reload before each 
 
 ## Movement and presentation
 
-- Tap and hold all four arrows. The courier faces the movement direction, animates while walking, and stands still after release.
+- Tap and hold W/A/S/D and all four arrows. Both sets move in the same directions, including with Caps Lock. The courier faces the movement direction, animates while walking, and stands still after release. Holding W and Up together, then releasing either one, keeps moving until the remaining key is released.
 - Approach water and press toward it. The courier faces the blocked direction, flashes red, and returns to the original cell.
-- Tap arrows and Shift + arrows during animation. The latest pending tap runs after the current playback. After input stops, the marker matches the small coordinate readout.
+- Tap movement keys and Shift + WASD / arrows during animation. The latest pending tap runs after the current playback. After input stops, the marker matches the small coordinate readout.
 - Resize the window or use browser zoom. The canvas remains sharp and the bag, controls, and ending dialog fit the page.
 - Toggle Sound with mouse, Tab, and Space. Confirm steps, bumps, collection, and delivery can be heard when enabled, and remain silent when muted. Hearing requires a person with speakers or headphones.
 
@@ -38,3 +38,9 @@ Run `deno task dev` and open the local URL with `?seed=121`. Reload before each 
 - Gather a new material. A dismissible recipe card names the recipe, shows the complete ingredient quantities and output, and explains what is still missing. Gather enough material to make it and check a Ready to make card points you to the workbench.
 - The card can be dismissed by mouse or keyboard. Moving leaves it available to read. Restart clears discovery hints for the new game.
 - Ground has occasional grass, pebbles, flowers, and shoreline details. Most cells stay empty and decorative details provide no resources.
+
+## Background music
+
+- Reload. After the first key press or click, Summer starts quietly and loops. Sound off pauses the music and mutes effects; Sound on resumes the same track.
+- Toggle sound several times. There is still only one music track, and movement / gathering work normally.
+- Run a production build and preview it. The track loads from the bundled asset URL and starts after a user gesture. The source copy remains under game/assets after rebuilding.

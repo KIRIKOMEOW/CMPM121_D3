@@ -22,7 +22,7 @@
             <nav id="landmark-hints" aria-label="Landmark directions"></nav>
           </div>
           <div class="map-footer">
-            <p>Arrows · move &nbsp; F · pick up here &nbsp; Shift + arrows · gather beside &nbsp; E · interact</p>
+            <p>WASD / arrows · move &nbsp; F · pick up here &nbsp; Shift + WASD / arrows · gather beside &nbsp; E · interact</p>
             <span id="position"></span>
           </div>
           <details class="guide">
@@ -64,6 +64,8 @@
       <p class="ending-stamp">DELIVERED</p>
       <button id="restart" type="button" autofocus>Start a new delivery</button>
     </dialog>
+    <audio id="background-music" src="/game/assets/Joe Hisaishi - Summer.mp3"
+      loop preload="metadata" hidden></audio>
     <script type="module" src="/game/main.ts"></script>
   </body>
 </html>
