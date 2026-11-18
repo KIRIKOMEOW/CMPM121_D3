@@ -84,6 +84,7 @@ Read the first failing command in the output, fix what it reports, and rerun `de
 ## Credits
 
 Tooling adapted from the [CMPM 121 Fall 2026 D2 starter](https://github.com/ucsc-cmpm-121-f26/d2-starter), with the Phaser setup following the instructor's E4 starter. Those repositories have no explicit repository license; no new license is assigned to that material. The D3 scaffold was instructor-directed and authored with Anthropic Claude agent assistance. Dependencies retain their respective licenses.
+BG music: Joe Hisaishi Summer https://www.youtube.com/watch?v=l0GN40EL1VU
 
 ## Review bot
 
