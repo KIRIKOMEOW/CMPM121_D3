@@ -3,7 +3,6 @@ import type { Command } from "../core/mod.ts";
 export type ManualEntry = {
   label: string;
   command: Command;
-  // The core query supplies only the quantities still needed.
   missing(): Readonly<Record<string, number>>;
 };
 
@@ -39,19 +38,11 @@ export class RecipeBook {
       list.append(row);
       return { entry, status, button };
     });
-    if (entries.length === 0) {
-      const empty = document.createElement("li");
-      empty.className = "recipe-empty";
-      empty.textContent = "No repair recipes available yet.";
-      list.append(empty);
-    }
-    this.refresh();
   }
 
-  // Update the text in place so a keyboard player keeps the focused button.
-  refresh(ended = false) {
+  refresh(ended: boolean, nearby: boolean) {
     for (const { entry, status, button } of this.rows) {
-      button.disabled = ended;
+      button.disabled = ended || !nearby;
       const missing = Object.entries(entry.missing())
         .map(([item, count]) => `${item} × ${count}`);
       status.textContent = ended

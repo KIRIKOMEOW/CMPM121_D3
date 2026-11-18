@@ -1,14 +1,28 @@
 import { assertEquals } from "@std/assert";
 import {
   apply,
+  DELIVERY_DOCK,
   missingIngredients,
   newGame,
   RECIPES,
   TERRAIN_YIELD,
+  WORKBENCH,
 } from "./mod.ts";
+
+Deno.test("crafting away from the workbench preserves cargo", () => {
+  const state = newGame(121);
+  state.inventory = { fiber: 2 };
+  const before = JSON.parse(JSON.stringify(state));
+  assertEquals(apply(state, { type: "craft", recipe: "rope" }), [{
+    type: "craftFailed",
+    reason: "Walk to the workbench at -2, 0 to craft.",
+  }]);
+  assertEquals(state, before);
+});
 
 Deno.test("failed and unknown crafts preserve every state field", () => {
   const state = newGame(121);
+  state.player = { ...WORKBENCH };
   state.inventory.fiber = 1;
   const before = JSON.parse(JSON.stringify(state));
   assertEquals(missingIngredients(state, RECIPES.rope), { fiber: 1 });
@@ -27,6 +41,7 @@ Deno.test("failed and unknown crafts preserve every state field", () => {
 
 Deno.test("crafting consumes ingredients and retained events keep their inventory", () => {
   const state = newGame(121);
+  state.player = { ...WORKBENCH };
   state.inventory = { fiber: 4, fuel: 2 };
   const first = apply(state, { type: "craft", recipe: "rope" });
   apply(state, { type: "craft", recipe: "rope" });
@@ -38,23 +53,49 @@ Deno.test("crafting consumes ingredients and retained events keep their inventor
   }]);
 });
 
-Deno.test("the repair recipe chain delivers once and stops further commands", () => {
+Deno.test("packing the final parcel requires a separate trip to the dock", () => {
   const state = newGame(121);
+  state.player = { ...WORKBENCH };
   state.inventory = { fiber: 2, driftwood: 2, scrap: 3, fuel: 2 };
-  for (const recipe of ["rope", "hull", "engine"]) {
+  for (const recipe of ["rope", "hull", "engine", "delivery"]) {
     apply(state, { type: "craft", recipe });
     assertEquals(state.ended, false);
   }
-  assertEquals(apply(state, { type: "craft", recipe: "delivery" }), [{
-    type: "crafted",
-    label: "Deliver the last parcel",
-    inventory: { deliveredParcel: 1 },
-  }, { type: "delivered" }]);
-  assertEquals(state.ended, true);
+  assertEquals(state.inventory, { finalParcel: 1 });
   const before = JSON.parse(JSON.stringify(state));
-  assertEquals(apply(state, { type: "craft", recipe: "delivery" }), []);
-  assertEquals(apply(state, { type: "move", direction: "east" }), []);
+  assertEquals(apply(state, { type: "deliver" }), [{
+    type: "actionFailed",
+    reason: "Take the final parcel to the delivery dock at 3, 0.",
+  }]);
   assertEquals(state, before);
+  state.player = { ...DELIVERY_DOCK };
+  assertEquals(apply(state, { type: "deliver" }), [{
+    type: "delivered",
+    inventory: { deliveredParcel: 1 },
+  }]);
+  const finished = JSON.parse(JSON.stringify(state));
+  assertEquals(state.ended, true);
+  assertEquals(apply(state, { type: "deliver" }), []);
+  assertEquals(apply(state, { type: "move", direction: "east" }), []);
+  assertEquals(state, finished);
+});
+
+Deno.test("delivery without a parcel and gathering landmarks change nothing", () => {
+  const state = newGame(121);
+  state.player = { ...DELIVERY_DOCK };
+  const before = JSON.parse(JSON.stringify(state));
+  assertEquals(apply(state, { type: "deliver" }), [{
+    type: "actionFailed",
+    reason: "Pack the final parcel at the workbench first.",
+  }]);
+  assertEquals(state, before);
+  state.player = { x: WORKBENCH.x + 1, y: WORKBENCH.y };
+  const beside = JSON.parse(JSON.stringify(state));
+  assertEquals(apply(state, { type: "gather", direction: "west" }), [{
+    type: "actionFailed",
+    reason: "Workbench is a landmark. Press E to interact.",
+  }]);
+  assertEquals(state, beside);
 });
 
 Deno.test("every recipe has positive costs and inputs reachable from gathering", () => {
@@ -71,10 +112,8 @@ Deno.test("every recipe has positive costs and inputs reachable from gathering",
       }
     }
   } while (reachable.size !== previousSize);
+  assertEquals(reachable.has("finalParcel"), true);
   for (const recipe of Object.values(RECIPES)) {
     assertEquals(reachable.has(recipe.output), true, recipe.label);
-    for (const item of Object.keys(recipe.inputs)) {
-      assertEquals(reachable.has(item), true, item);
-    }
   }
 });

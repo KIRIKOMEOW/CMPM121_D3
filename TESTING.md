@@ -1,52 +1,40 @@
 # Manual test script
 
-For a person, or an agent driving a browser. Run `deno task dev` and open the local URL with `?seed=121`. Before each section, reload. To read logical state, use `game.state` in the console. To read what has played, use the panel beside the grid, including the `#live` text, or look at the marker.
+Run `deno task dev` and open the local URL with `?seed=121`. Reload before each section. Logical state is available as `game.state` in the browser console.
 
 **Promotion rule:** a bug found by hand or by an agent becomes a permanent test in `core/` before it is fixed, unless it truly lives in `game/`, in which case add a step here.
 
-| #  | Action                                                    | Expected observation                                                                                                                                                            |
-| -- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1  | Load the page                                             | One canvas with a pale marker at the center. The waybill shows an empty Manifest. No console errors.                                                                            |
-| 2  | Tap the right arrow                                       | The marker slides one cell east. `#live` says `moved to 1, 0`. `player` is `{ x: 1, y: 0 }`.                                                                                    |
-| 3  | Walk until lagoon is ahead, then press toward it.         | The marker lurches and flashes red, then returns to its cell. #live says blocked by lagoon at .... player has not changed.                                                      |
-| 4  | Tap an arrow during a walk                                | The tap waits. The marker finishes the walk, then takes that step. It never skips a cell.                                                                                       |
-| 5  | Mash arrows quickly, then stop                            | The marker settles on the cell `player` reports.                                                                                                                                |
-| 6  | Hold an arrow down                                        | The marker keeps walking. Holding into a wall repeats the bump.                                                                                                                 |
-| 7  | Load `?seed=7`                                            | A different map.                                                                                                                                                                |
-| 8  | Run `game.state` in the console                           | Plain data includes `seed`, `player`, `inventory`, `harvested`, and `ended`. A new game has `ended: false`.                                                                     |
-| 9  | Press an arrow several times                              | Position and Terrain in the panel change as each step plays, and never ahead of the marker.                                                                                     |
-| 10 | Make the window short, then press the down arrow          | The page does not scroll. The marker moves.                                                                                                                                     |
-| 11 | Click the sound button, then press an arrow               | The button reads `Sound: off`, and the arrow still moves the marker.                                                                                                            |
-| 12 | Click the sound button again                              | The button reads `Sound: on`, and you hear a two-note chime.                                                                                                                    |
-| 13 | Tab to the sound button and press Space                   | It toggles. Arrow keys still move the marker.                                                                                                                                   |
-| 14 | Listen while walking and bumping (headphones or speakers) | A soft tick on each step, and a low buzz on each bump. **This is the only check that a person can hear them.**                                                                  |
-| 15 | On a high-resolution display, or at browser zoom 200%     | Grid edges stay sharp. The marker stays centered. Run `document.querySelector("canvas").width`: it is the canvas `clientWidth` times `devicePixelRatio`.                        |
-| 16 | Tap Shift + right arrow, then repeat                      | A red line scans the eastern cell with one high beep and leaves a barcode. One item appears in the Manifest. On repeat, `already harvested` appears and the count stays at one. |
-| 17 | While walking, tap Shift + arrow                          | The walk finishes before the target flashes and Manifest updates. The gather targets the cell next to the new player position.                                                  |
-| 18 | From spawn, gather east, then walk east, west, east       | The barcode stays on the map. Terrain reads `Collected` on the harvested cell both times and drops that label one cell west. The inventory count stays at one.                  |
+## Calm map and resources
 
-### Repair manual
+- Load the game. Most tiles are empty, ground colors are muted, and only scattered wood, leaves, metal, and fuel cans are visible. The camp path is clear.
+- At spawn, the page shows the map, bag, brief objective, controls, and a collapsed Resource guide. Workbench recipes and the delivery panel are hidden.
+- Gather toward an empty tile. The message explains that the tile is empty. Inventory and harvested records stay unchanged.
+- Find a visible resource and gather toward it with Shift + arrow. Exactly one item enters the bag and the resource disappears. Repeat on the same tile. It reports already collected and the count stays unchanged.
+- Walk away and return. The collected resource stays absent. Empty tiles cannot provide hidden resources.
+- Expand Resource guide if needed. It explains the four resources and gathering fuel from shore.
 
-- Tab to **Repair manual** below the manifest. Press Space to close it and Enter to reopen it. Focus stays on the heading. With an empty catalog, the manual reads “No repair recipes available yet.”
-- With catalog entries connected, Tab to a recipe and gather a missing material. Check that the displayed shortage changes after the animation and the same button keeps focus. When all materials are available, it reads “Ready to craft.”
-- Use Enter or Space on a recipe, including one with missing materials. Each activation sends one request. If an animation is playing, the request waits for it to finish.
+## Movement and presentation
 
-### Delivery preview
+- Tap and hold all four arrows. The courier faces the movement direction, animates while walking, and stands still after release.
+- Approach water and press toward it. The courier faces the blocked direction, flashes red, and returns to the original cell.
+- Tap arrows and Shift + arrows during animation. The latest pending tap runs after the current playback. After input stops, the marker matches the small coordinate readout.
+- Resize the window or use browser zoom. The canvas remains sharp and the bag, controls, and ending dialog fit the page.
+- Toggle Sound with mouse, Tab, and Space. Confirm steps, bumps, collection, and delivery can be heard when enabled, and remain silent when muted. Hearing requires a person with speakers or headphones.
 
-- Open `?seed=121`. Move and gather. The waybill still shows its objective and the delivery stamp stays hidden.
-- Open `?seed=121&preview=delivery`. Turn sound on, then activate **Preview delivery** by mouse or keyboard. The red **DELIVERED** stamp replaces the objective, Latest scan reads “Final parcel delivered.”, and a short rising chord plays once. The button disappears. The preview leaves `game.state.ended` false. You can still walk and gather.
-- Reload the preview, switch sound off and activate it again. Check that the same stamp and message appear silently.
-- To check playback order, reload the preview and run `game.controller.submit({ type: "move", direction: "east" }); document.querySelector("#preview-delivery").click()` in the browser console. The marker finishes the step before the stamp appears.
+## Workbench, delivery, and restart
 
-### Crafting and delivery
+- From spawn, move left once and press E. The nearby workbench section opens and the first recipe receives keyboard focus. With missing materials, Enter reports the shortage and leaves the bag unchanged.
+- Leave the workbench. After playback settles, the recipe section disappears. Return and gather the materials needed for rope, hull, engine, and the final parcel.
+- Use Tab and Enter or Space to craft at the workbench. Shortages update and consumed items leave the bag.
+- Packing the final parcel leaves the game running. Walk to the dock at (3, 0). Only near the dock does the Deliver button appear.
+- At the dock without a parcel, E explains what is missing. With the parcel, E or Deliver consumes it and opens the ending dialog.
+- The ending dialog focuses Start a new delivery. Press Enter to restart with empty cargo, uncollected resources, and no ending stamp.
+- Repeat on `?seed=7`. Both landmarks remain reachable and the full gathering, repair, and delivery route can be completed.
 
-- Reload a regular game. The Repair manual lists rope, hull, engine, and delivery with the quantities still needed. Tab to a recipe and press Enter with insufficient cargo. Latest scan explains what is missing and cargo stays unchanged.
-- Gather two fiber, craft rope, gather two driftwood and craft hull, gather three scrap and craft engine, then gather two fuel and choose delivery. All recipes support Tab and Enter or Space.
-- After each craft, consumed cargo disappears and its output appears. A recipe activated during a walk waits for playback. The manual refreshes when playback settles.
-- Delivery consumes the hull, engine, and fuel. The delivered stamp appears with the arrival chord. Further movement and gathering leave the state unchanged, and recipe buttons become disabled. Reload to start another game.
+## Pickup, navigation, and recipe hints
 
-### Courier sprite
-
-- Reload and check the courier has a red cap, navy uniform, and mailbag on transparent terrain. Tap all four arrows, then hold an arrow. The courier faces the movement direction, cycles walking poses, and stands still after releasing the key.
-- Walk toward lagoon. The courier faces the lagoon, flashes red while bumping, then returns to normal colors on the original cell.
-- Gather, craft, and resize the window. Check the courier remains aligned with its cell and the map follows it. Repeat after a production build to check the image loads from its bundled URL.
+- Walk onto a visible resource and press F. The resource disappears and enters the bag. F again and adjacent gathering of that same cell both report already collected.
+- Walk away from camp. The bottom-right map corner shows arrows and distances to the workbench and dock. Walk in different directions and check the arrows rotate toward each location. Near the corresponding landmark, its hint disappears.
+- Gather a new material. A dismissible recipe card names the recipe, shows the complete ingredient quantities and output, and explains what is still missing. Gather enough material to make it and check a Ready to make card points you to the workbench.
+- The card can be dismissed by mouse or keyboard. Moving leaves it available to read. Restart clears discovery hints for the new game.
+- Ground has occasional grass, pebbles, flowers, and shoreline details. Most cells stay empty and decorative details provide no resources.

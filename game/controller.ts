@@ -42,6 +42,17 @@ export class Controller {
   }
 
   private keyDown(event: KeyboardEvent) {
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+    if (event.key.toLowerCase() === "f") {
+      event.preventDefault();
+      if (!event.repeat) this.submit({ type: "gather" });
+      return;
+    }
+    if (event.key.toLowerCase() === "e") {
+      event.preventDefault();
+      if (!event.repeat) this.submit({ type: "interact" });
+      return;
+    }
     const direction = ARROWS[event.key];
     if (!direction || event.ctrlKey || event.metaKey || event.altKey) return;
     // Otherwise arrow keys would also scroll the page.

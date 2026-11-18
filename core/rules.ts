@@ -2,12 +2,13 @@
 // once, and the events it returns are a record of what happened. Whoever called
 // apply() decides how, or whether, to show them over time.
 
+import { atDeliveryDock, atWorkbench, landmarkAt } from "./places.ts";
 import { missingIngredients, RECIPES } from "./recipes.ts";
 import {
   isPassable,
   type Resource,
+  resourceAt,
   type Terrain,
-  TERRAIN_YIELD,
   terrainAt,
 } from "./terrain.ts";
 
@@ -28,8 +29,10 @@ export type GameState = {
 // Command: https://gameprogrammingpatterns.com/command.html
 export type Command =
   | { type: "move"; direction: Direction }
-  | { type: "gather"; direction: Direction }
-  | { type: "craft"; recipe: string };
+  | { type: "gather"; direction?: Direction }
+  | { type: "craft"; recipe: string }
+  | { type: "deliver" }
+  | { type: "interact" };
 
 // Domain Event: https://martinfowler.com/eaaDev/DomainEvent.html
 export type GameEvent =
@@ -39,7 +42,9 @@ export type GameEvent =
   | { type: "alreadyHarvested"; at: Cell }
   | { type: "crafted"; label: string; inventory: Record<string, number> }
   | { type: "craftFailed"; reason: string }
-  | { type: "delivered" };
+  | { type: "actionFailed"; reason: string }
+  | { type: "workshopOpened" }
+  | { type: "delivered"; inventory: Record<string, number> };
 
 const STEPS: Record<Direction, Cell> = {
   north: { x: 0, y: -1 },
@@ -69,12 +74,27 @@ export function apply(state: GameState, command: Command): GameEvent[] {
       return gather(state, command.direction);
     case "craft":
       return craft(state, command.recipe);
+    case "deliver":
+      return deliver(state);
+    case "interact":
+      if (atWorkbench(state)) return [{ type: "workshopOpened" }];
+      if (atDeliveryDock(state)) return deliver(state);
+      return [{
+        type: "actionFailed",
+        reason: "Visit the workbench at -2, 0 or delivery dock at 3, 0.",
+      }];
   }
 }
 
 function craft(state: GameState, recipeId: string): GameEvent[] {
   if (!Object.hasOwn(RECIPES, recipeId)) {
     return [{ type: "craftFailed", reason: "Unknown recipe." }];
+  }
+  if (!atWorkbench(state)) {
+    return [{
+      type: "craftFailed",
+      reason: "Walk to the workbench at -2, 0 to craft.",
+    }];
   }
   const recipe = RECIPES[recipeId];
   const missing = missingIngredients(state, recipe);
@@ -89,27 +109,55 @@ function craft(state: GameState, recipeId: string): GameEvent[] {
     if (state.inventory[item] === 0) delete state.inventory[item];
   }
   state.inventory[recipe.output] = (state.inventory[recipe.output] ?? 0) + 1;
-  const events: GameEvent[] = [{
+  return [{
     type: "crafted",
     label: recipe.label,
     inventory: { ...state.inventory },
   }];
-  if (recipe.endsGame) {
-    state.ended = true;
-    events.push({ type: "delivered" });
-  }
-  return events;
 }
 
-function gather(state: GameState, direction: Direction): GameEvent[] {
-  const step = STEPS[direction];
+function deliver(state: GameState): GameEvent[] {
+  if (!atDeliveryDock(state)) {
+    return [{
+      type: "actionFailed",
+      reason: "Take the final parcel to the delivery dock at 3, 0.",
+    }];
+  }
+  if ((state.inventory.finalParcel ?? 0) < 1) {
+    return [{
+      type: "actionFailed",
+      reason: "Pack the final parcel at the workbench first.",
+    }];
+  }
+  state.inventory.finalParcel -= 1;
+  if (state.inventory.finalParcel === 0) delete state.inventory.finalParcel;
+  state.inventory.deliveredParcel = (state.inventory.deliveredParcel ?? 0) + 1;
+  state.ended = true;
+  return [{ type: "delivered", inventory: { ...state.inventory } }];
+}
+
+function gather(state: GameState, direction?: Direction): GameEvent[] {
+  const step = direction ? STEPS[direction] : { x: 0, y: 0 };
   const at = { x: state.player.x + step.x, y: state.player.y + step.y };
+  const landmark = landmarkAt(at.x, at.y);
+  if (landmark) {
+    return [{
+      type: "actionFailed",
+      reason: `${landmark} is a landmark. Press E to interact.`,
+    }];
+  }
   const key = `${at.x},${at.y}`;
   if (state.harvested[key]) {
     return [{ type: "alreadyHarvested", at }];
   }
 
-  const resource = TERRAIN_YIELD[terrainAt(state.seed, at.x, at.y)];
+  const resource = resourceAt(state.seed, at.x, at.y);
+  if (!resource) {
+    return [{
+      type: "actionFailed",
+      reason: "This tile is empty. Look for a resource on the map.",
+    }];
+  }
   const total = (state.inventory[resource] ?? 0) + 1;
   state.inventory[resource] = total;
   state.harvested[key] = true;

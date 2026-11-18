@@ -10,7 +10,20 @@ export const TERRAIN_YIELD: Readonly<Record<Terrain, Resource>> = {
   wreck: "scrap",
   lagoon: "fuel",
 };
+// Resource nodes occupy about one fifth of the map; the camp path stays clear.
+export function resourceAt(
+  seed: number,
+  x: number,
+  y: number,
+): Resource | undefined {
+  if (y === 0 && x >= -3 && x <= 4) return undefined;
+  if (gridValue(seed + 99, x, y) >= 0.2) return undefined;
+  return TERRAIN_YIELD[terrainAt(seed, x, y)];
+}
+
 export function terrainAt(seed: number, x: number, y: number): Terrain {
+  // The camp path keeps both landmarks reachable for every seed.
+  if (y === 0 && x >= -3 && x <= 4) return "sand";
   const raw = 0.65 * noise(seed, x, y, 9) + 0.35 * noise(seed + 1, x, y, 3);
   // Every game starts at the origin, so flatten the land there. Otherwise some
   // seeds would start inside a lake or walled into a pocket.

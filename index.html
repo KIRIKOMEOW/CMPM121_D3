@@ -3,65 +3,67 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Last Mile · Air courier waybill</title>
+    <title>Last Mile</title>
     <link rel="icon" href="data:," />
     <link rel="stylesheet" href="/game/style.css" />
   </head>
   <body>
     <main id="app">
-      <header class="waybill-header">
-        <div>
-          <p class="label">Air courier waybill</p>
-          <h1>Last Mile</h1>
-        </div>
-        <button id="preview-delivery" type="button"
-          hidden>Preview delivery</button>
-        <p id="delivery-stamp" hidden>DELIVERED</p>
-        <p id="objective"
-          class="objective">Repair the seaplane and deliver the last parcel.</p>
+      <header class="game-header">
+        <h1>Last Mile</h1>
+        <p id="objective">Gather supplies and repair at the workbench.</p>
+        <p id="delivery-stamp" hidden>Delivered</p>
+        <button id="mute" type="button" aria-pressed="false">Sound: on</button>
       </header>
-      <div class="waybill-body">
-        <section class="map" aria-labelledby="map-title">
-          <header class="section-heading">
-            <h2 id="map-title">Atoll map</h2>
-            <button id="mute" type="button" aria-pressed="false">
-              Sound: on
-            </button>
-          </header>
-          <div id="grid"></div>
-          <div class="controls" aria-label="Keyboard controls">
-            <span><kbd>Arrows</kbd> Move</span>
-            <span><kbd>Shift</kbd> + <kbd>Arrows</kbd> Gather adjacent cell</span>
+      <div class="game-layout">
+        <section class="map" aria-label="Island map">
+          <div class="map-stage">
+            <div id="grid"></div>
+            <nav id="landmark-hints" aria-label="Landmark directions"></nav>
           </div>
-        </section>
-        <aside id="hud" aria-label="Courier records">
-          <section aria-labelledby="position-title">
-            <h2 id="position-title">Field position</h2>
-            <dl class="field-position">
-              <dt>Coordinates</dt>
-              <dd id="position"></dd>
-              <dt>Terrain</dt>
-              <dd id="terrain"></dd>
-            </dl>
-          </section>
-          <section class="manifest" aria-labelledby="manifest-title">
-            <h2 id="manifest-title">Manifest</h2>
-            <div class="manifest-columns label" aria-hidden="true">
-              <span>Item</span><span>Qty</span>
-            </div>
-            <ul id="inventory" aria-labelledby="manifest-title"></ul>
-          </section>
-          <details class="repair-manual" open>
-            <summary id="manual-title">Repair manual</summary>
-            <ul id="recipes" aria-labelledby="manual-title"></ul>
+          <div class="map-footer">
+            <p>Arrows · move &nbsp; F · pick up here &nbsp; Shift + arrows · gather beside &nbsp; E · interact</p>
+            <span id="position"></span>
+          </div>
+          <details class="guide">
+            <summary>Resource guide</summary>
+            <p>Wood → driftwood · Leaves → fiber · Metal → scrap · Red can → fuel.</p>
+            <p>Collect only visible resources. Gather fuel from the shore. The workbench is at (-2, 0), the delivery dock at (3, 0).</p>
           </details>
-          <section class="scan" aria-labelledby="scan-title">
-            <h2 id="scan-title">Latest scan</h2>
-            <p id="live" aria-live="polite">Awaiting first scan.</p>
+        </section>
+        <aside id="hud" aria-label="Courier bag and actions">
+          <section class="bag">
+            <h2>Your bag</h2>
+            <ul id="inventory"></ul>
           </section>
+          <p id="context"></p>
+          <section id="recipe-tip" hidden aria-live="polite">
+            <button id="dismiss-tip" type="button"
+              aria-label="Dismiss recipe hint">×</button>
+            <p id="recipe-tip-title"></p>
+            <p id="recipe-tip-formula"></p>
+            <p id="recipe-tip-status"></p>
+          </section>
+          <details id="manual" hidden>
+            <summary>Workbench</summary>
+            <p id="station-status">Choose a repair recipe.</p>
+            <ul id="recipes"></ul>
+          </details>
+          <section id="delivery-panel" hidden>
+            <h2>Delivery dock</h2>
+            <p id="dock-status">Bring your packed final parcel.</p>
+            <button id="deliver" type="button">Deliver final parcel</button>
+          </section>
+          <p id="live" aria-live="polite">Your route starts here.</p>
         </aside>
       </div>
     </main>
+    <dialog id="ending" aria-labelledby="ending-title">
+      <h2 id="ending-title">The last mile,<br />delivered.</h2>
+      <p>You repaired the seaplane and brought the final parcel home.</p>
+      <p class="ending-stamp">DELIVERED</p>
+      <button id="restart" type="button" autofocus>Start a new delivery</button>
+    </dialog>
     <script type="module" src="/game/main.ts"></script>
   </body>
 </html>

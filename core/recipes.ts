@@ -4,7 +4,6 @@ export type Recipe = {
   label: string;
   inputs: Readonly<Record<string, number>>;
   output: string;
-  endsGame?: boolean;
 };
 
 export const RECIPES: Readonly<Record<string, Recipe>> = {
@@ -16,10 +15,9 @@ export const RECIPES: Readonly<Record<string, Recipe>> = {
   },
   engine: { label: "Repair engine", inputs: { scrap: 3 }, output: "engine" },
   delivery: {
-    label: "Deliver the last parcel",
+    label: "Pack final parcel",
     inputs: { hull: 1, engine: 1, fuel: 2 },
-    output: "deliveredParcel",
-    endsGame: true,
+    output: "finalParcel",
   },
 };
 
